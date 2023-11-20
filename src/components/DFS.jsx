@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import Graph from './Graph';
+import { reorderEdgeNode } from './utils';
 
 function DFS({
   nodes,
@@ -10,6 +11,8 @@ function DFS({
   onEdgeMouseOver,
   onEdgeMouseOut,
   startNode,
+  correctPath,
+  setCorrectPath,
 }) {
   const [visitedNodes, setVisitedNodes] = useState([]);
   const [edgesInDFS, setEdgesInDFS] = useState([]);
@@ -27,6 +30,7 @@ function DFS({
     });
 
     const visited = {};
+    const edgesArr = []; // Track edges visited in DFS
 
     const dfsRecursive = (node, visitedOrder) => {
       visited[node] = true;
@@ -35,7 +39,8 @@ function DFS({
       if (graph[node]) {
         for (const neighbor of graph[node]) {
           if (!visited[neighbor]) {
-            setEdgesInDFS(prevEdges => [...prevEdges, `edge${node}-${neighbor}`]);
+            const el = reorderEdgeNode(`edge${node}-${neighbor}`);
+            edgesArr.push(el);
             dfsRecursive(neighbor, visitedOrder);
           }
         }
@@ -46,15 +51,20 @@ function DFS({
     dfsRecursive(startNode, visitedOrder);
 
     setVisitedNodes(visitedOrder);
-    console.log('Visited Nodes in DFS:', visitedOrder);
-    console.log('Edges visited in DFS:', edgesInDFS);
+    setEdgesInDFS(edgesArr);
+
+    return edgesArr;
   };
 
-  useEffect(() => {
-    traverseDFS();
-  }, [startNode, links, nodes]);
+  const memoizedTraverseBFS = useMemo(() => traverseDFS(), [startNode, links, nodes]);
 
-  // Additional useEffect for selectedEdges, correctSelectedEdges
+  useEffect(() => {
+    setEdgesInDFS(memoizedTraverseBFS);
+    if (memoizedTraverseBFS.join(',') !== correctPath.join(',')) {
+      setCorrectPath(memoizedTraverseBFS);
+    }
+    
+  }, [startNode, links, nodes]);
 
   return (
     <Graph

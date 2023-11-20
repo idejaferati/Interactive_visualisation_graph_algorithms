@@ -29,7 +29,7 @@ export default function GraphSelection({ onGraphSelect }) {
 
   return (
     <div>
-      <span>Select Graph:</span>
+      <span>Select Graph: </span>
       <Select
         value={selectedGraph.label}
         onChange={handleGraphChange}

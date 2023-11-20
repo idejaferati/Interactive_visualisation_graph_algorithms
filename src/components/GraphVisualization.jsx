@@ -11,6 +11,12 @@ import { nodes1, links1 } from './GraphInit';
 import StartNodeSelection from "./StartNodeSelection";
 import AutoButton from "./AutoButton";
 import { Box } from '@mui/material';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import TableCell, { tableCellClasses } from '@mui/material/TableCell';
+
 
 function GraphVisualization({algorithm}) {
   const [selectedEdges, setSelectedEdges] = useState([]);
@@ -60,8 +66,9 @@ function GraphVisualization({algorithm}) {
             correctSelectedEdges={correctSelectedEdges}
             onEdgeClick={handleEdgeClick}
             onEdgeMouseOver={handleMouseOverEdge}
-            onEdgeMouseOut={handleMouseOutEdge}
-            startNode={startNode}         
+            onEdgeMouseOut={handleMouseOutEdge}  
+            correctPath={correctPath}
+            setCorrectPath={setCorrectPath}       
           />
         );
       case "dfs":
@@ -75,6 +82,8 @@ function GraphVisualization({algorithm}) {
             onEdgeMouseOver={handleMouseOverEdge}
             onEdgeMouseOut={handleMouseOutEdge}
             startNode={startNode}
+            correctPath={correctPath}
+            setCorrectPath={setCorrectPath} 
           />
         );
       case "bfs":
@@ -88,6 +97,8 @@ function GraphVisualization({algorithm}) {
             onEdgeMouseOver={handleMouseOverEdge}
             onEdgeMouseOut={handleMouseOutEdge}
             startNode={startNode}
+            correctPath={correctPath}
+            setCorrectPath={setCorrectPath} 
           />
         );
       case "prim":
@@ -101,6 +112,8 @@ function GraphVisualization({algorithm}) {
               onEdgeMouseOver={handleMouseOverEdge}
               onEdgeMouseOut={handleMouseOutEdge}
               startNode={startNode}
+              correctPath={correctPath}
+              setCorrectPath={setCorrectPath} 
             />
           );
       default:
@@ -123,10 +136,14 @@ function GraphVisualization({algorithm}) {
       setSelectedEdges((prevSelectedPath) => [...prevSelectedPath, edgeId]);
     }
 
-    const isCorrectPath = correctPath.includes(edgeId);
-
-    if (isCorrectPath) {
-      setCorrectSelectedEdges((prevSelectedPath) => [...prevSelectedPath, edgeId]);
+    if (correctPath.includes(edgeId) && !steps.includes("Correct Path Selected!")) {
+      const pathIndex = correctPath.indexOf(edgeId);
+      if (correctSelectedEdges.length === pathIndex) {
+        setCorrectSelectedEdges((prevSelectedPath) => [...prevSelectedPath, edgeId]);
+      } else {
+        d3.select(`#${edgeId}`).attr("stroke", "red");
+        setSteps([...steps, `Edge ${edgeId} was wrongly selected because the order is not correct.`]);
+      }
     } else {
       d3.select(`#${edgeId}`).attr("stroke", "red");
       setSteps([...steps, `Edge ${edgeId} was wrongly selected.`]);
@@ -165,21 +182,28 @@ function GraphVisualization({algorithm}) {
   };
 
   useEffect(() => {
-    if ( mode === 'auto' ) {
+    if (mode === 'auto') {
       const edges = graphData.links.map((link) => `edge${link.source}-${link.target}`);
-
-      edges.forEach((edgeId, index) => {
+      let delay = 0;
+  
+      correctPath.forEach((edgeId) => {
         setTimeout(() => {
-          if (correctPath.includes(edgeId)) {
-            d3.select(`#${edgeId}`).attr("stroke", "green");
+          if (edges.includes(edgeId)) {
+            d3.select(`#${edgeId}`).attr('stroke', 'green');
           } else {
-            d3.select(`#${edgeId}`).attr("stroke", "gray");
+            d3.select(`#${edgeId}`).attr('stroke', 'gray');
           }
-        }, index * 1000); // Applying colors one by one with a delay of 1 seconds
-      });  
-      setTimeout(()=> {setMode('manual'); console.log('manual')}, 7000);
+        }, delay * 1000); // Applying colors one by one with a delay
+        delay++;
+      });
+  
+      setTimeout(() => {
+        setMode('manual');
+        console.log('manual');
+      }, (delay + 1) * 2000); // Adding extra time for the final state after coloring all edges
     }
-  }, [mode, graphData.links, correctSelectedEdges]);
+  }, [mode, graphData.links, correctPath]);
+  
 
   return (
     <div>
@@ -198,16 +222,52 @@ function GraphVisualization({algorithm}) {
             ))}
           </ul>
         </div>
+        {
+          (steps.includes("Correct Path Selected!") || mode === 'auto') &&
+          <Table sx={{ maxWidth: 500, maxHeight: 400, height: 100, width: 200 }} aria-label="customized table">
+            <TableHead>
+              <TableRow>
+                <TableCell align="center" colSpan={3}>
+                  Correct Path table
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>No.</TableCell>
+                <TableCell align="right">Edges</TableCell>
+                <TableCell align="right">Weight</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {correctPath.map((row, index) => (
+                <TableRow key={row}>
+                  <TableCell component="th" scope="row">
+                    {index+1}
+                  </TableCell>
+                  <TableCell align="right">{row.replace("edge", "").replace("node1", "A").replace("node2", "B").replace("node3", "C").replace("node4", "D")}</TableCell>
+                  <TableCell align="right">{
+                    graphData.links.filter(e => {
+                      const edge = row.replace("edge", "");
+                      return e.source === edge.split("-")[0] && e.target === edge.split("-")[1];
+                    })
+                    .map(filteredEdge => filteredEdge.weight)}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        }
       </Box>
       
       <Box
         sx={{
           display: 'flex',
-          justifyContent:'space-between'
+          justifyContent:'space-around'
         }}
       >
         <AutoButton onAutoButtonClick={(mode) => setMode(mode)}/>
-        <StartNodeSelection onStartNodeSelect={(node) => setStartNode( node )} />
+        {
+          algorithm !== "kruskal" && <StartNodeSelection onStartNodeSelect={(node) => setStartNode( node )} />
+        }
         <GraphSelection onGraphSelect={(nodes, links) => setGraphData({ nodes, links })} />
       </Box>
     </div>

@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import Graph from './Graph';
+import { reorderEdgeNode } from './utils';
 
 function Kruskal({
   nodes,
@@ -9,6 +10,8 @@ function Kruskal({
   onEdgeClick,
   onEdgeMouseOver,
   onEdgeMouseOut,
+  correctPath,
+  setCorrectPath,
 }) {
   const [minimumSpanningTree, setMinimumSpanningTree] = useState([]);
 
@@ -18,6 +21,11 @@ function Kruskal({
     const rank = {};
 
     const find = (node) => {
+      if (parent[node] === undefined) {
+        parent[node] = node;
+        return node;
+      }
+
       if (parent[node] !== node) {
         parent[node] = find(parent[node]);
       }
@@ -48,25 +56,29 @@ function Kruskal({
     for (const edge of sortedEdges) {
       const rootSource = find(edge.source);
       const rootTarget = find(edge.target);
-
       if (rootSource !== rootTarget) {
         minimumSpanningTreeEdges.push(edge);
         union(rootSource, rootTarget);
       }
     }
+    
+    const formattedEdges = minimumSpanningTreeEdges.map(edge => {
+      const el = reorderEdgeNode(`edge${edge.source}-${edge.target}`);
+      return el;
+    });
 
-    const formattedEdges = minimumSpanningTreeEdges.map(edge => `edge${edge.source}-${edge.target}`);
-
-    setMinimumSpanningTree(formattedEdges);
-
-    console.log('Minimum Spanning Tree:', formattedEdges);
+    return formattedEdges;
   };
 
-  useEffect(() => {
-    findMinimumSpanningTree();
-  }, [links, nodes]);
+  const memoizedMinimumSpanningTree = useMemo(() => findMinimumSpanningTree(), [links, nodes]);
 
-  // Additional useEffect for selectedEdges, correctSelectedEdges
+  useEffect(() => {
+    setMinimumSpanningTree(memoizedMinimumSpanningTree);
+    if (memoizedMinimumSpanningTree.join(',') !== correctPath.join(',')) {
+      setCorrectPath(memoizedMinimumSpanningTree);
+    }
+    console.log('Minimum Spanning Tree:', memoizedMinimumSpanningTree);
+  }, [links, nodes]);
 
   return (
     <Graph
@@ -77,7 +89,7 @@ function Kruskal({
       onEdgeClick={onEdgeClick}
       onEdgeMouseOver={onEdgeMouseOver}
       onEdgeMouseOut={onEdgeMouseOut}
-      minimumSpanningTree={minimumSpanningTree}
+      //minimumSpanningTree={minimumSpanningTree}
     />
   );
 }

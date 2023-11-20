@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import Graph from './Graph';
+import { reorderEdgeNode } from './utils';
 
 function BFS({
   nodes,
@@ -10,6 +11,8 @@ function BFS({
   onEdgeMouseOver,
   onEdgeMouseOut,
   startNode,
+  correctPath,
+  setCorrectPath,
 }) {
   const [visitedNodes, setVisitedNodes] = useState([]);
   const [edgesInBFS, setEdgesInBFS] = useState([]);
@@ -44,23 +47,29 @@ function BFS({
           if (!visited[neighbor]) {
             queue.push(neighbor);
             visited[neighbor] = true;
-            edgesVisited.push(`edge${currentNode}-${neighbor}`);
+            const el = reorderEdgeNode(`edge${currentNode}-${neighbor}`);
+            edgesVisited.push(el);
           }
         }
       }
     }
 
-    setVisitedNodes(visitedOrder);
-    setEdgesInBFS(edgesVisited);
     console.log('Visited Nodes in BFS:', visitedOrder);
     console.log('Edges visited in BFS:', edgesVisited);
+
+    setVisitedNodes(visitedOrder);
+    return edgesVisited;
   };
 
-  useEffect(() => {
-    traverseBFS();
-  }, [startNode, links, nodes]);
+  const memoizedTraverseBFS = useMemo(() => traverseBFS(), [startNode, links, nodes]);
 
-  // Additional useEffect for selectedEdges, correctSelectedEdges
+  useEffect(() => {
+    setEdgesInBFS(memoizedTraverseBFS);
+    if (memoizedTraverseBFS.join(',') !== correctPath.join(',')) {
+      setCorrectPath(memoizedTraverseBFS);
+    }
+    
+  }, [startNode, links, nodes]);
 
   return (
     <Graph

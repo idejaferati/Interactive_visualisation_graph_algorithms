@@ -28,7 +28,7 @@ export default function StartNodeSelection({ onStartNodeSelect }) {
 
   return (
     <div>
-      <span>Select Start Node:</span>
+      <span>Select Start Node: </span>
       <Select
         value={selectedStartNode.label}
         onChange={handleGraphChange}

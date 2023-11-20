@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import Graph from './Graph';
-import { useMemo } from 'react';
+import { reorderEdgeNode } from './utils';
 
 function Djikstra({
   nodes,
@@ -72,7 +72,8 @@ function Djikstra({
   
       while (tempNode !== startNode) {
         const parentNode = parents[tempNode];
-        formattedPath.unshift(`edge${parentNode}-${tempNode}`);
+        const el = reorderEdgeNode(`edge${parentNode}-${tempNode}`);
+        formattedPath.unshift(el);
         tempNode = parentNode;
       }
   
