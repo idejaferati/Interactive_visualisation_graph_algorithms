@@ -15,7 +15,9 @@ import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
-import TableCell, { tableCellClasses } from '@mui/material/TableCell';
+import TableCell from '@mui/material/TableCell';
+import ClearButton from './ClearButton';
+import BackButton from './BackButton';
 
 
 function GraphVisualization({algorithm}) {
@@ -124,29 +126,39 @@ function GraphVisualization({algorithm}) {
   };
 
   const handleEdgeClick = (d) => {
-    // Handle edge click based on the selected algorithm
-    // For example, call the corresponding function for Dijkstra or Kruskal or DFS or BFS
-    const edgeId = d.target.id;
-    const isSelected = selectedEdges.includes(edgeId);
+    if (mode === "manual") {
+      // Handle edge click based on the selected algorithm
+      // For example, call the corresponding function for Dijkstra or Kruskal or DFS or BFS
+      const edgeId = d.target.id;
+      const isSelected = selectedEdges.includes(edgeId);
 
-    if (isSelected) {
-      setSelectedEdges((prevSelectedPath) => prevSelectedPath.filter((id) => id !== edgeId));
-      setCorrectSelectedEdges((prev) => prev.filter((id) => id !== edgeId));
-    } else {
-      setSelectedEdges((prevSelectedPath) => [...prevSelectedPath, edgeId]);
-    }
-
-    if (correctPath.includes(edgeId) && !steps.includes("Correct Path Selected!")) {
-      const pathIndex = correctPath.indexOf(edgeId);
-      if (correctSelectedEdges.length === pathIndex) {
-        setCorrectSelectedEdges((prevSelectedPath) => [...prevSelectedPath, edgeId]);
+      if (isSelected) {
+        setSelectedEdges((prevSelectedPath) => prevSelectedPath.filter((id) => id !== edgeId));
+        setCorrectSelectedEdges((prev) => prev.filter((id) => id !== edgeId));
       } else {
-        d3.select(`#${edgeId}`).attr("stroke", "red");
-        setSteps([...steps, `Edge ${edgeId} was wrongly selected because the order is not correct.`]);
+        setSelectedEdges((prevSelectedPath) => [...prevSelectedPath, edgeId]);
+      }
+
+      if (correctPath.includes(edgeId) && !steps.includes("Correct Path Selected!")) {
+        const pathIndex = correctPath.indexOf(edgeId);
+        if (correctSelectedEdges.length === pathIndex) {
+          setCorrectSelectedEdges((prevSelectedPath) => [...prevSelectedPath, edgeId]);
+        } else {
+          d3.select(`#${edgeId}`).transition()
+          .duration(1000) // Duration for the color transition
+          .ease(d3.easeLinear)
+          .attr("stroke", "red");
+          setSteps([...steps, `Edge ${edgeId} was wrongly selected because the order is not correct.`]);
+        }
+      } else {
+        d3.select(`#${edgeId}`).transition()
+        .duration(1000) // Duration for the color transition
+        .ease(d3.easeLinear)
+        .attr("stroke", "red");
+        setSteps([...steps, `Edge ${edgeId} was wrongly selected.`]);
       }
     } else {
-      d3.select(`#${edgeId}`).attr("stroke", "red");
-      setSteps([...steps, `Edge ${edgeId} was wrongly selected.`]);
+      console.log(`You are not allowed to interact with graph on auto mode. Clear Graph data if you want to restart.`);
     }
   };
 
@@ -166,18 +178,35 @@ function GraphVisualization({algorithm}) {
   }, [correctSelectedEdges, correctPath]);
 
   const handleMouseOverEdge = (event, d) => {
-    const edgeId = `edge${d.source}-${d.target}`;
-    d3.select(`#${edgeId}`).attr("stroke", correctSelectedEdges.includes(edgeId) ? "green" : "red");
+    if (mode === "manual") {
+      const edgeId = `edge${d.source}-${d.target}`;
+      d3.select(`#${edgeId}`).transition()
+      .duration(1000) // Duration for the color transition
+      .ease(d3.easeLinear)
+      .attr("stroke", correctSelectedEdges.includes(edgeId) ? "green" : "red");
+    } else {
+      console.log(`You are not allowed to interact with graph on auto mode. Clear Graph data if you want to restart.`);
+    }
   };
 
   const handleMouseOutEdge = (event, d) => {
-    const edgeId = `edge${d.source}-${d.target}`;
-    if (!selectedEdges.includes(edgeId)) {
-      d3.select(`#${edgeId}`).attr("stroke", (d) =>
-        correctSelectedEdges.includes(edgeId) ? "green" : "gray"
-      );
+    if (mode === "manual") {
+      const edgeId = `edge${d.source}-${d.target}`;
+      if (!selectedEdges.includes(edgeId)) {
+        d3.select(`#${edgeId}`).transition()
+        .duration(1000) // Duration for the color transition
+        .ease(d3.easeLinear)
+        .attr("stroke", (d) =>
+          correctSelectedEdges.includes(edgeId) ? "green" : "gray"
+        );
+      } else {
+        d3.select(`#${edgeId}`).transition()
+        .duration(1000) // Duration for the color transition
+        .ease(d3.easeLinear)
+        .attr("stroke", correctSelectedEdges.includes(edgeId) ? "green" : selectedEdges.includes(edgeId) ? "gray" : "red");
+      }
     } else {
-      d3.select(`#${edgeId}`).attr("stroke", correctSelectedEdges.includes(edgeId) ? "green" : selectedEdges.includes(edgeId) ? "gray" : "red");
+      console.log(`You are not allowed to interact with graph on auto mode. Clear Graph data if you want to restart.`);
     }
   };
 
@@ -189,24 +218,26 @@ function GraphVisualization({algorithm}) {
       correctPath.forEach((edgeId) => {
         setTimeout(() => {
           if (edges.includes(edgeId)) {
-            d3.select(`#${edgeId}`).attr('stroke', 'green');
+            d3.select(`#${edgeId}`).transition()
+            .duration(1000) // Duration for the color transition
+            .ease(d3.easeLinear)
+            .attr('stroke', 'green');
           } else {
-            d3.select(`#${edgeId}`).attr('stroke', 'gray');
+            d3.select(`#${edgeId}`).transition()
+            .duration(1000) // Duration for the color transition
+            .ease(d3.easeLinear)
+            .attr('stroke', 'gray');
           }
-        }, delay * 1000); // Applying colors one by one with a delay
+        }, delay * 2000); // Applying colors one by one with a delay
         delay++;
       });
-  
-      setTimeout(() => {
-        setMode('manual');
-        console.log('manual');
-      }, (delay + 1) * 2000); // Adding extra time for the final state after coloring all edges
     }
-  }, [mode, graphData.links, correctPath]);
+  }, [mode, graphData.links, correctPath, setCorrectSelectedEdges]);
   
 
   return (
     <div>
+      <BackButton/>
       <Box
         sx={{
           display: 'flex',
@@ -223,7 +254,6 @@ function GraphVisualization({algorithm}) {
           </ul>
         </div>
         {
-          (steps.includes("Correct Path Selected!") || mode === 'auto') &&
           <Table sx={{ maxWidth: 500, maxHeight: 400, height: 100, width: 200 }} aria-label="customized table">
             <TableHead>
               <TableRow>
@@ -238,7 +268,7 @@ function GraphVisualization({algorithm}) {
               </TableRow>
             </TableHead>
             <TableBody>
-              {correctPath.map((row, index) => (
+              { (steps.includes("Correct Path Selected!") || mode === 'auto')  && correctPath.map((row, index) => (
                 <TableRow key={row}>
                   <TableCell component="th" scope="row">
                     {index+1}
@@ -264,7 +294,14 @@ function GraphVisualization({algorithm}) {
           justifyContent:'space-around'
         }}
       >
-        <AutoButton onAutoButtonClick={(mode) => setMode(mode)}/>
+        <AutoButton onAutoButtonClick={(mode) => {
+          setMode(mode);          
+          setSteps([`You are not allowed to interact with graph on auto mode. Clear Graph data if you want to restart.`]);
+        }}/>
+        <ClearButton onClearButtonClick={(mode) => {
+          setMode(mode);
+          setSteps([]);
+        }}/>
         {
           algorithm !== "kruskal" && <StartNodeSelection onStartNodeSelect={(node) => setStartNode( node )} />
         }
