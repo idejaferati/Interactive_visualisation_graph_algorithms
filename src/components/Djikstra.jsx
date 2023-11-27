@@ -11,10 +11,10 @@ function Djikstra({
   onEdgeMouseOver,
   onEdgeMouseOut,
   startNode,
+  endNode,
   correctPath,
   setCorrectPath,
 }) {
-  const endNode = 'node4';
   const [shortestPath, setShortestPath] = useState([]);
 
   const findShortestPath = () => {

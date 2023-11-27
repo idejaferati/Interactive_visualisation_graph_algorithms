@@ -12,7 +12,7 @@ export default function BackButton({ onClearButtonClick }) {
       variant="outlined"
       onClick={() => navigate(-1)}
     >
-      <ArrowBackIcon/> Go back
+      <ArrowBackIcon/> back
     </Button>
   );
 }

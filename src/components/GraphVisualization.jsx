@@ -18,7 +18,8 @@ import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
 import ClearButton from './ClearButton';
 import BackButton from './BackButton';
-
+import { renameEdge } from "./utils";
+import EndNodeSelection from './EndNodeSelection';
 
 function GraphVisualization({algorithm}) {
   const [selectedEdges, setSelectedEdges] = useState([]);
@@ -27,21 +28,9 @@ function GraphVisualization({algorithm}) {
   const [mode, setMode] = useState('manual');
   const [correctSelectedEdges, setCorrectSelectedEdges] = useState([]);
   const [graphData, setGraphData] = useState({nodes: nodes1, links: links1});
-  const [startNode, setStartNode] = useState('node1');
+  const [startNode, setStartNode] = useState(nodes1[0]?.id);
+  const [endNode, setEndNode] = useState(nodes1[nodes1.length-1]?.id);
   
-
-  useEffect(() => {
-    const svg = d3
-      .select("#graph-container")
-      .append("svg")
-      .attr("width", 500)
-      .attr("height", 500);
-
-    return () => {
-      svg.selectAll("*").remove(); // Clean up on component unmount
-    };
-  }, []); // Empty dependency array to ensure this runs only once
-
   const GraphAlgorithm = () => {
     switch (algorithm) {
       case "djikstra":
@@ -55,6 +44,7 @@ function GraphVisualization({algorithm}) {
             onEdgeMouseOver={handleMouseOverEdge}
             onEdgeMouseOut={handleMouseOutEdge}
             startNode={startNode}
+            endNode={endNode}
             correctPath={correctPath}
             setCorrectPath={setCorrectPath}
           />
@@ -126,7 +116,7 @@ function GraphVisualization({algorithm}) {
   };
 
   const handleEdgeClick = (d) => {
-    if (mode === "manual") {
+    if (mode === "manual" && !steps.includes('Correct Path Selected!')) {
       // Handle edge click based on the selected algorithm
       // For example, call the corresponding function for Dijkstra or Kruskal or DFS or BFS
       const edgeId = d.target.id;
@@ -148,14 +138,14 @@ function GraphVisualization({algorithm}) {
           .duration(1000) // Duration for the color transition
           .ease(d3.easeLinear)
           .attr("stroke", "red");
-          setSteps([...steps, `Edge ${edgeId} was wrongly selected because the order is not correct.`]);
+          setSteps([...steps, `Edge ${renameEdge(edgeId, graphData.nodes)} was wrongly selected because the order is not correct.`]);
         }
       } else {
         d3.select(`#${edgeId}`).transition()
         .duration(1000) // Duration for the color transition
         .ease(d3.easeLinear)
         .attr("stroke", "red");
-        setSteps([...steps, `Edge ${edgeId} was wrongly selected.`]);
+        setSteps([...steps, `Edge ${renameEdge(edgeId, graphData.nodes)} was wrongly selected.`]);
       }
     } else {
       console.log(`You are not allowed to interact with graph on auto mode. Clear Graph data if you want to restart.`);
@@ -175,10 +165,10 @@ function GraphVisualization({algorithm}) {
         // Reset state if incorrect order
       }
     }
-  }, [correctSelectedEdges, correctPath]);
+  }, [correctSelectedEdges, correctPath, steps]);
 
   const handleMouseOverEdge = (event, d) => {
-    if (mode === "manual") {
+    if (mode === "manual" && !steps.includes('Correct Path Selected!')) {
       const edgeId = `edge${d.source}-${d.target}`;
       d3.select(`#${edgeId}`).transition()
       .duration(1000) // Duration for the color transition
@@ -190,7 +180,7 @@ function GraphVisualization({algorithm}) {
   };
 
   const handleMouseOutEdge = (event, d) => {
-    if (mode === "manual") {
+    if (mode === "manual" && !steps.includes('Correct Path Selected!')) {
       const edgeId = `edge${d.source}-${d.target}`;
       if (!selectedEdges.includes(edgeId)) {
         d3.select(`#${edgeId}`).transition()
@@ -241,23 +231,17 @@ function GraphVisualization({algorithm}) {
       <Box
         sx={{
           display: 'flex',
-          justifyContent:'space-around'
+          justifyContent:'space-around',
+          gap: "15px"
         }}
+
       >
-        <GraphAlgorithm />
-        <div style={{width: "400px"}}>
-          <h3>Information:</h3>
-          <ul>
-            {steps.map((step, index) => (
-              <li key={index}>{step}</li>
-            ))}
-          </ul>
-        </div>
+        
         {
-          <Table sx={{ maxWidth: 500, maxHeight: 400, height: 100, width: 200 }} aria-label="customized table">
+          <Table sx={{ maxWidth: 500, maxHeight: 400, height: 100, width: 200, marginTop: "10px" }} aria-label="customized table">
             <TableHead>
               <TableRow>
-                <TableCell align="center" colSpan={3}>
+                <TableCell align="center" colSpan={3} style={{fontWeight: "bold"}}>
                   Correct Path table
                 </TableCell>
               </TableRow>
@@ -273,7 +257,7 @@ function GraphVisualization({algorithm}) {
                   <TableCell component="th" scope="row">
                     {index+1}
                   </TableCell>
-                  <TableCell align="right">{row.replace("edge", "").replace("node1", "A").replace("node2", "B").replace("node3", "C").replace("node4", "D")}</TableCell>
+                  <TableCell align="right">{renameEdge(row, graphData.nodes)}</TableCell>
                   <TableCell align="right">{
                     graphData.links.filter(e => {
                       const edge = row.replace("edge", "");
@@ -286,6 +270,15 @@ function GraphVisualization({algorithm}) {
             </TableBody>
           </Table>
         }
+        <GraphAlgorithm />
+        <div style={{width: "400px"}}>
+          <h3>Information</h3>
+          <ul style={{padding: "10px 28px", height: "300px", overflowY: "scroll", background: "whitesmoke"}}>
+            {steps.map((step, index) => (
+              <li key={index}>{step}</li>
+            ))}
+          </ul>
+        </div>
       </Box>
       
       <Box
@@ -293,17 +286,25 @@ function GraphVisualization({algorithm}) {
           display: 'flex',
           justifyContent:'space-around'
         }}
+        style={{margin: "15px"}}
       >
         <AutoButton onAutoButtonClick={(mode) => {
+          setCorrectSelectedEdges([]);
+          setSelectedEdges([]);
           setMode(mode);          
           setSteps([`You are not allowed to interact with graph on auto mode. Clear Graph data if you want to restart.`]);
         }}/>
         <ClearButton onClearButtonClick={(mode) => {
           setMode(mode);
           setSteps([]);
+          setCorrectSelectedEdges([]);
+          setSelectedEdges([]);
         }}/>
         {
-          algorithm !== "kruskal" && <StartNodeSelection onStartNodeSelect={(node) => setStartNode( node )} />
+          algorithm !== "kruskal" && <StartNodeSelection selectedGraph={graphData.nodes} onStartNodeSelect={(node) => setStartNode( node )} disabledOptions={algorithm !== "djikstra" ? [] : [endNode]} />
+        }
+        {
+          algorithm === "djikstra" && <EndNodeSelection selectedGraph={graphData.nodes} onEndNodeSelect={(node) => setEndNode( node )} disabledOptions={[startNode]} />
         }
         <GraphSelection onGraphSelect={(nodes, links) => setGraphData({ nodes, links })} />
       </Box>

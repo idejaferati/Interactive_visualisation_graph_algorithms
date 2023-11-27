@@ -12,9 +12,8 @@ function Graph({
 }) {
 
   useEffect(() => {
-    const svg = d3.select("#graph-container")
-        .append("svg")
-        .attr("width", 500)
+    const svg = d3.select("#graph-container svg")
+        .attr("width", 900)
         .attr("height", 500);
 
     return () => {
@@ -97,7 +96,7 @@ function Graph({
     };
   }, [selectedEdges, correctSelectedEdges]);
 
-  return <div id="graph-container" style={{ height: "400px", width: "400px" }}></div>;
+  return <div id="graph-container" style={{ height: "500px", width: "900px" }}><svg></svg></div>;
 }
 
 export default Graph;

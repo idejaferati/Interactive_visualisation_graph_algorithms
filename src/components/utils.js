@@ -13,3 +13,11 @@ export const reorderEdgeNode = (edgeNode) => {
 
   return edgeNode;
 };
+
+export const renameEdge = (edgeId, selectedGraphNodes) => {
+  let renamedEdge = edgeId.replace("edge", "");
+  selectedGraphNodes.forEach(e => {
+    renamedEdge = renamedEdge.replace(e.id, e.label);
+  });
+  return renamedEdge;
+}

@@ -31,6 +31,7 @@ export default function GraphSelection({ onGraphSelect }) {
     <div>
       <span>Select Graph: </span>
       <Select
+        style={{height: "35px"}}
         value={selectedGraph.label}
         onChange={handleGraphChange}
         onClose={handleClose}
@@ -39,7 +40,7 @@ export default function GraphSelection({ onGraphSelect }) {
       >
         {graphOptions.map((option) => (
           <MenuItem key={option.label} value={option.label}>
-            <Timeline /> {option.label}
+           {open &&  <Timeline />} <span>{option.label}</span>
           </MenuItem>
         ))}
       </Select>

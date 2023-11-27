@@ -2,29 +2,30 @@ import * as React from 'react';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 
-export default function StartNodeSelection({ selectedGraph, onStartNodeSelect, disabledOptions }) {
+
+export default function EndNodeSelection({ selectedGraph, onEndNodeSelect, disabledOptions }) {
   const [open, setOpen] = React.useState(false);
-  const [selectedStartNode, setSelectedStartNode] = React.useState(selectedGraph[0]);
+  const [selectedEndNode, setSelectedEndNode] = React.useState(selectedGraph[selectedGraph.length-1]);
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
   const handleGraphChange = (event) => {
     const selectedValue = event.target.value;
-    const selectedStartNodeOption = selectedGraph.find(
+    const selectedEndNodeOption = selectedGraph.find(
       (option) => option.label === selectedValue
     );
-    setSelectedStartNode(selectedStartNodeOption);
-    onStartNodeSelect(selectedStartNodeOption.id);
+    setSelectedEndNode(selectedEndNodeOption);
+    onEndNodeSelect(selectedEndNodeOption.id);
     handleClose();
   };
 
   return (
     <div>
-      <span>Select Start Node: </span>
+      <span>Select End Node: </span>
       <Select
         style={{height: "35px"}}
-        value={selectedStartNode.label}
+        value={selectedEndNode.label}
         onChange={handleGraphChange}
         onClose={handleClose}
         onOpen={handleOpen}
