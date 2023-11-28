@@ -33,8 +33,8 @@ function Kruskal({
     };
 
     const union = (x, y) => {
-      const rootX = find(x);
-      const rootY = find(y);
+      let rootX = find(x);
+      let rootY = find(y);
 
       if (rootX !== rootY) {
         if (rank[rootX] < rank[rootY]) {

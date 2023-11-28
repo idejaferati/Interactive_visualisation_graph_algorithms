@@ -50,6 +50,7 @@ function Graph({
       .attr("x", d => (getNodePosition(d.source).x + getNodePosition(d.target).x) / 2 +8)
       .attr("y", d => (getNodePosition(d.source).y + getNodePosition(d.target).y) / 2 +15)
       .attr("text-anchor", "middle")
+      .style("fill", "blue")
       .text(d => d.weight);
 
     // Nodes
@@ -84,15 +85,15 @@ function Graph({
 
     // Update link colors
     svg
-      .selectAll(".link")
+      .selectAll(".link line")
       .attr("stroke", (d) => {
         const edgeId = `edge${d.source}-${d.target}`;
-        return selectedEdges.includes(edgeId) ? "red" : correctSelectedEdges.includes(edgeId) ? "green" : "gray";
+        return correctSelectedEdges.includes(edgeId) ? "green" : (selectedEdges.includes(edgeId) ? "red" : "gray");
       });
 
     return () => {
       // Reset link colors on unmount
-      svg.selectAll(".link").attr("stroke", "gray");
+      svg.selectAll(".link line").attr("stroke", "gray");
     };
   }, [selectedEdges, correctSelectedEdges]);
 

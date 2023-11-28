@@ -1,5 +1,5 @@
 // GraphVisualization.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import * as d3 from "d3";
 import GraphSelection from "./GraphSelection";
 import Djikstra from "./Djikstra";
@@ -126,8 +126,18 @@ function GraphVisualization({algorithm}) {
         setSelectedEdges((prevSelectedPath) => prevSelectedPath.filter((id) => id !== edgeId));
         setCorrectSelectedEdges((prev) => prev.filter((id) => id !== edgeId));
       } else {
-        setSelectedEdges((prevSelectedPath) => [...prevSelectedPath, edgeId]);
+        setSelectedEdges((prevSelectedPath) => {
+          // Ensure that the array length is less than 2
+          if (prevSelectedPath.length >= 1) {
+            // If it already has 2 elements, remove the first element
+            return [...prevSelectedPath.slice(1), edgeId];
+          } else {
+            // If it has less than 2 elements, just add the new element
+            return [...prevSelectedPath, edgeId];
+          }
+        });
       }
+      
 
       if (correctPath.includes(edgeId) && !steps.includes("Correct Path Selected!")) {
         const pathIndex = correctPath.indexOf(edgeId);
@@ -193,7 +203,7 @@ function GraphVisualization({algorithm}) {
         d3.select(`#${edgeId}`).transition()
         .duration(1000) // Duration for the color transition
         .ease(d3.easeLinear)
-        .attr("stroke", correctSelectedEdges.includes(edgeId) ? "green" : selectedEdges.includes(edgeId) ? "gray" : "red");
+        .attr("stroke", correctSelectedEdges.includes(edgeId) ? "green" : selectedEdges.includes(edgeId) ? "red" : "gray");
       }
     } else {
       console.log(`You are not allowed to interact with graph on auto mode. Clear Graph data if you want to restart.`);
@@ -221,6 +231,8 @@ function GraphVisualization({algorithm}) {
         }, delay * 2000); // Applying colors one by one with a delay
         delay++;
       });
+    } else {
+      d3.select("#graph-container svg").selectAll(".link line").attr("stroke", "gray");
     }
   }, [mode, graphData.links, correctPath, setCorrectSelectedEdges]);
   
@@ -301,12 +313,30 @@ function GraphVisualization({algorithm}) {
           setSelectedEdges([]);
         }}/>
         {
-          algorithm !== "kruskal" && <StartNodeSelection selectedGraph={graphData.nodes} onStartNodeSelect={(node) => setStartNode( node )} disabledOptions={algorithm !== "djikstra" ? [] : [endNode]} />
+          algorithm !== "kruskal" && 
+          <StartNodeSelection 
+            selectedGraph={graphData.nodes} 
+            onStartNodeSelect={(node) => {
+              setStartNode( node );
+            }} 
+            disabledOptions={algorithm !== "djikstra" ? [] : [endNode]} 
+          />
         }
         {
-          algorithm === "djikstra" && <EndNodeSelection selectedGraph={graphData.nodes} onEndNodeSelect={(node) => setEndNode( node )} disabledOptions={[startNode]} />
+          algorithm === "djikstra" && 
+          <EndNodeSelection 
+            selectedGraph={graphData.nodes} 
+            onEndNodeSelect={(node) => {
+              setEndNode( node );
+            }} 
+            disabledOptions={[startNode]} 
+          />
         }
-        <GraphSelection onGraphSelect={(nodes, links) => setGraphData({ nodes, links })} />
+        <GraphSelection 
+          onGraphSelect={(nodes, links) => {
+            setGraphData({ nodes, links });
+          }} 
+        />
       </Box>
     </div>
   );
