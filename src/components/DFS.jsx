@@ -77,6 +77,7 @@ function DFS({
       onEdgeMouseOut={onEdgeMouseOut}
       visitedNodes={visitedNodes}
       edgesInDFS={edgesInDFS}
+      hideWeights={true}
     />
   );
 }

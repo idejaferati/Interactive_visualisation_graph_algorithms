@@ -82,6 +82,7 @@ function BFS({
       onEdgeMouseOut={onEdgeMouseOut}
       visitedNodes={visitedNodes}
       edgesInBFS={edgesInBFS}
+      hideWeights={true}
     />
   );
 }

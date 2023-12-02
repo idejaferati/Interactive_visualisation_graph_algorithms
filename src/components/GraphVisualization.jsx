@@ -260,7 +260,9 @@ function GraphVisualization({algorithm}) {
               <TableRow>
                 <TableCell>No.</TableCell>
                 <TableCell align="right">Edges</TableCell>
-                <TableCell align="right">Weight</TableCell>
+                {
+                  algorithm !== "bfs" && algorithm !== "dfs" && <TableCell align="right">Weight</TableCell>
+                }
               </TableRow>
             </TableHead>
             <TableBody>
@@ -270,13 +272,16 @@ function GraphVisualization({algorithm}) {
                     {index+1}
                   </TableCell>
                   <TableCell align="right">{renameEdge(row, graphData.nodes)}</TableCell>
-                  <TableCell align="right">{
-                    graphData.links.filter(e => {
-                      const edge = row.replace("edge", "");
-                      return e.source === edge.split("-")[0] && e.target === edge.split("-")[1];
-                    })
-                    .map(filteredEdge => filteredEdge.weight)}
-                  </TableCell>
+                  {
+                    algorithm !== "bfs" && algorithm !== "dfs" && 
+                      <TableCell align="right">{
+                        graphData.links.filter(e => {
+                          const edge = row.replace("edge", "");
+                          return e.source === edge.split("-")[0] && e.target === edge.split("-")[1];
+                        })
+                        .map(filteredEdge => filteredEdge.weight)}
+                      </TableCell>
+                  }
                 </TableRow>
               ))}
             </TableBody>
@@ -336,6 +341,7 @@ function GraphVisualization({algorithm}) {
           onGraphSelect={(nodes, links) => {
             setGraphData({ nodes, links });
           }} 
+          algorithm={algorithm}
         />
       </Box>
     </div>

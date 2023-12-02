@@ -9,6 +9,7 @@ function Graph({
   onEdgeClick,
   onEdgeMouseOver,
   onEdgeMouseOut,
+  hideWeights
 }) {
 
   useEffect(() => {
@@ -46,12 +47,15 @@ function Graph({
       .attr("id", d => `edge${d.source}-${d.target}`)
       .style("cursor", "pointer");
 
-    linkGroup.append("text")
+    if (!hideWeights) {
+      linkGroup.append("text")
       .attr("x", d => (getNodePosition(d.source).x + getNodePosition(d.target).x) / 2 +8)
       .attr("y", d => (getNodePosition(d.source).y + getNodePosition(d.target).y) / 2 +15)
       .attr("text-anchor", "middle")
       .style("fill", "blue")
       .text(d => d.weight);
+    }
+    
 
     // Nodes
     const nodeGroup = svg.selectAll(".node")
