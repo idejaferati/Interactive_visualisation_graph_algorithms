@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import * as d3 from "d3";
 
 function Graph({
@@ -9,11 +9,12 @@ function Graph({
   onEdgeClick,
   onEdgeMouseOver,
   onEdgeMouseOut,
-  hideWeights
+  hideWeights,
+  isDirected
 }) {
-
+  const svgRef = useRef(null);
   useEffect(() => {
-    const svg = d3.select("#graph-container svg")
+    const svg = d3.select(svgRef.current)
         .attr("width", 900)
         .attr("height", 500);
 
@@ -23,15 +24,15 @@ function Graph({
   }, []); // Empty dependency array to ensure this runs only once
     
   useEffect(() => {
-    const svg = d3.select("#graph-container svg");
+    const svg = d3.select(svgRef.current)
 
     // Links
     const linkGroup = svg.selectAll(".link")
       .data(links)
       .enter().append("g")
       .attr("class", "link");
-
-    linkGroup.append("line")
+    
+    const lines = linkGroup.append("line")
       .attr("x1", d => getNodePosition(d.source).x)
       .attr("y1", d => getNodePosition(d.source).y)
       .attr("x2", d => getNodePosition(d.target).x)
@@ -47,10 +48,60 @@ function Graph({
       .attr("id", d => `edge${d.source}-${d.target}`)
       .style("cursor", "pointer");
 
+    if (isDirected) {
+      // Append arrow markers for directed edges
+      const arrowMarkers = svg.append("defs");
+
+      // Define the default arrow marker
+      arrowMarkers.append('marker')
+        .attr('id', 'arrowgray')
+        .attr('viewBox', '0 -5 10 10')
+        .attr('refX', 13.5)
+        .attr('refY', 0)
+        .attr('markerWidth', 3)
+        .attr('markerHeight', 3)
+        .attr('orient', 'auto')
+        .append('path')
+        .attr('d', 'M0,-5L10,0L0,5')
+        .attr('class', 'arrowHead')
+        .style('fill', 'gray');
+
+      // Define the green arrow marker
+      arrowMarkers.append('marker')
+        .attr('id', 'arrowgreen')
+        .attr('viewBox', '0 -5 10 10')
+        .attr('refX', 13.5)
+        .attr('refY', 0)
+        .attr('markerWidth', 3)
+        .attr('markerHeight', 3)
+        .attr('orient', 'auto')
+        .append('path')
+        .attr('d', 'M0,-5L10,0L0,5')
+        .attr('class', 'arrowHead')
+        .style('fill', 'green');
+
+      // Define the red arrow marker
+      arrowMarkers.append('marker')
+        .attr('id', 'arrowred')
+        .attr('viewBox', '0 -5 10 10')
+        .attr('refX', 13.5)
+        .attr('refY', 0)
+        .attr('markerWidth', 3)
+        .attr('markerHeight', 3)
+        .attr('orient', 'auto')
+        .append('path')
+        .attr('d', 'M0,-5L10,0L0,5')
+        .attr('class', 'arrowHead')
+        .style('fill', 'red');
+
+
+      lines.attr('marker-end', 'url(#arrowgray)');
+    }
+
     if (!hideWeights) {
       linkGroup.append("text")
-      .attr("x", d => (getNodePosition(d.source).x + getNodePosition(d.target).x) / 2 +8)
-      .attr("y", d => (getNodePosition(d.source).y + getNodePosition(d.target).y) / 2 +15)
+      .attr("x", d => (getNodePosition(d.source).x + getNodePosition(d.target).x) / 2 + 8)
+      .attr("y", d => (getNodePosition(d.source).y + getNodePosition(d.target).y) / 2 + 15)
       .attr("text-anchor", "middle")
       .style("fill", "blue")
       .text(d => d.weight);
@@ -65,13 +116,14 @@ function Graph({
       .attr("transform", d => `translate(${d.x},${d.y})`);
 
     nodeGroup.append("circle")
-      .attr("r", 20)
+      .attr("r", 15)
       .attr("fill", "blue");
 
     nodeGroup.append("text")
-      .attr("dy", -22)
-      .attr("dx", -10)
+      .attr("dy", 4)
+      .attr("dx", 0.5)
       .attr("text-anchor", "middle")
+      .attr("fill", "white")
       .text(d => d.label);
       
     function getNodePosition(nodeId) {
@@ -85,7 +137,7 @@ function Graph({
   }, [nodes, links, selectedEdges, correctSelectedEdges, onEdgeClick, onEdgeMouseOver, onEdgeMouseOut]);
 
   useEffect(() => {
-    const svg = d3.select("#graph-container svg");
+    const svg = d3.select(svgRef.current);
 
     // Update link colors
     svg
@@ -95,13 +147,23 @@ function Graph({
         return correctSelectedEdges.includes(edgeId) ? "green" : (selectedEdges.includes(edgeId) ? "red" : "gray");
       });
 
+    if (isDirected) {
+      svg.selectAll(".link line").attr("marker-end", (d) => {
+        const edgeId = `edge${d.source}-${d.target}`;
+        return correctSelectedEdges.includes(edgeId) ? 'url(#arrowgreen)' : 'url(#arrowgray)';
+      });
+    }
+
     return () => {
       // Reset link colors on unmount
       svg.selectAll(".link line").attr("stroke", "gray");
+      if (isDirected) {
+        svg.selectAll(".link line").attr("marker-end", "url(#arrowgray)");
+      }
     };
   }, [selectedEdges, correctSelectedEdges]);
 
-  return <div id="graph-container" style={{ height: "500px", width: "900px" }}><svg></svg></div>;
+  return <div id="graph-container" style={{ height: "500px", width: "900px" }}><svg ref={svgRef}></svg></div>;
 }
 
 export default Graph;

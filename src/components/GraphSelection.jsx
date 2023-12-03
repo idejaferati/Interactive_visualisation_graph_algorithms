@@ -11,6 +11,9 @@ const graphOptions = [
   { label: 'Negative weighted graph 1', nodes: nodes1, links: linksNeg1, algorithmPermission: ["kruskal", "prim"] },
   { label: 'Negative weighted graph 2', nodes: nodes2, links: linksNeg2, algorithmPermission: ["kruskal", "prim"] },
   { label: 'Negative weighted graph 3', nodes: nodes3, links: linksNeg3, algorithmPermission: ["kruskal", "prim"] },
+  { label: 'Directed graph 1', nodes: nodes1, links: links1, algorithmPermission: ["djikstra", "bfs", "dfs"] },
+  { label: 'Directed graph 2', nodes: nodes2, links: links2, algorithmPermission: ["djikstra", "bfs", "dfs"] },
+  { label: 'Directed graph 3', nodes: nodes3, links: links3, algorithmPermission: ["djikstra", "bfs", "dfs"] },
 ];
 
 export default function GraphSelection({ onGraphSelect, algorithm }) {
@@ -26,7 +29,7 @@ export default function GraphSelection({ onGraphSelect, algorithm }) {
       (option) => option.label === selectedValue
     );
     setSelectedGraph(selectedGraphOption);
-    onGraphSelect(selectedGraphOption.nodes, selectedGraphOption.links);
+    onGraphSelect(selectedGraphOption.nodes, selectedGraphOption.links, selectedGraphOption.label);
     handleClose();
   };
 

@@ -13,6 +13,7 @@ function BFS({
   startNode,
   correctPath,
   setCorrectPath,
+  isDirected
 }) {
   const [visitedNodes, setVisitedNodes] = useState([]);
   const [edgesInBFS, setEdgesInBFS] = useState([]);
@@ -23,10 +24,16 @@ function BFS({
     // Creating the graph data structure
     links.forEach(link => {
       graph[link.source] = graph[link.source] || [];
-      graph[link.target] = graph[link.target] || [];
-  
-      graph[link.source].push(link.target);
-      graph[link.target].push(link.source); // Assuming an undirected graph
+
+      if (isDirected) {
+        // For directed graphs, add edges in the specified direction
+        graph[link.source].push(link.target);
+      } else {
+        // For undirected graphs, add edges in both directions
+        graph[link.source].push(link.target);
+        graph[link.target] = graph[link.target] || [];
+        graph[link.target].push(link.source);
+      }
     });
 
     const visited = {};
@@ -83,6 +90,7 @@ function BFS({
       visitedNodes={visitedNodes}
       edgesInBFS={edgesInBFS}
       hideWeights={true}
+      isDirected={isDirected}
     />
   );
 }

@@ -14,6 +14,7 @@ function Djikstra({
   endNode,
   correctPath,
   setCorrectPath,
+  isDirected
 }) {
   const [shortestPath, setShortestPath] = useState([]);
 
@@ -25,8 +26,14 @@ function Djikstra({
       graph[link.source] = graph[link.source] || {};
       graph[link.target] = graph[link.target] || {};
   
-      graph[link.source][link.target] = link.weight;
-      graph[link.target][link.source] = link.weight; // Assuming an undirected graph
+      if (isDirected) {
+        // For directed graphs, add the edge in the specified direction
+        graph[link.source][link.target] = link.weight;
+      } else {
+        // For undirected graphs, add edges in both directions
+        graph[link.source][link.target] = link.weight;
+        graph[link.target][link.source] = link.weight;
+      }
     });
   
     const distances = {};
@@ -107,6 +114,7 @@ function Djikstra({
       onEdgeClick={onEdgeClick}
       onEdgeMouseOver={onEdgeMouseOver}
       onEdgeMouseOut={onEdgeMouseOut}
+      isDirected={isDirected}
     />
   );
 }

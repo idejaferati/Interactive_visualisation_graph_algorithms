@@ -1,5 +1,5 @@
 // GraphVisualization.jsx
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import * as d3 from "d3";
 import GraphSelection from "./GraphSelection";
 import Djikstra from "./Djikstra";
@@ -27,9 +27,10 @@ function GraphVisualization({algorithm}) {
   const [steps, setSteps] = useState([]);
   const [mode, setMode] = useState('manual');
   const [correctSelectedEdges, setCorrectSelectedEdges] = useState([]);
-  const [graphData, setGraphData] = useState({nodes: nodes1, links: links1});
+  const [graphData, setGraphData] = useState({nodes: nodes1, links: links1, label: "Graph 1"});
   const [startNode, setStartNode] = useState(nodes1[0]?.id);
   const [endNode, setEndNode] = useState(nodes1[nodes1.length-1]?.id);
+  const isDirected = graphData.label.includes("Directed");
   
   const GraphAlgorithm = () => {
     switch (algorithm) {
@@ -47,6 +48,7 @@ function GraphVisualization({algorithm}) {
             endNode={endNode}
             correctPath={correctPath}
             setCorrectPath={setCorrectPath}
+            isDirected={isDirected}
           />
         );
       case "kruskal":
@@ -76,6 +78,7 @@ function GraphVisualization({algorithm}) {
             startNode={startNode}
             correctPath={correctPath}
             setCorrectPath={setCorrectPath} 
+            isDirected={isDirected}
           />
         );
       case "bfs":
@@ -91,6 +94,7 @@ function GraphVisualization({algorithm}) {
             startNode={startNode}
             correctPath={correctPath}
             setCorrectPath={setCorrectPath} 
+            isDirected={isDirected}
           />
         );
       case "prim":
@@ -144,17 +148,33 @@ function GraphVisualization({algorithm}) {
         if (correctSelectedEdges.length === pathIndex) {
           setCorrectSelectedEdges((prevSelectedPath) => [...prevSelectedPath, edgeId]);
         } else {
-          d3.select(`#${edgeId}`).transition()
+          const line = d3.select(`#${edgeId}`).transition()
           .duration(1000) // Duration for the color transition
           .ease(d3.easeLinear)
           .attr("stroke", "red");
+
+          if (isDirected) {
+            line.transition()
+              .duration(1000) // Duration for the color transition
+              .ease(d3.easeLinear)
+              .attr("marker-end", "url(#arrowred)");
+          }
+
           setSteps([...steps, `Edge ${renameEdge(edgeId, graphData.nodes)} was wrongly selected because the order is not correct.`]);
         }
       } else {
-        d3.select(`#${edgeId}`).transition()
+        const line = d3.select(`#${edgeId}`).transition()
         .duration(1000) // Duration for the color transition
         .ease(d3.easeLinear)
         .attr("stroke", "red");
+
+        if (isDirected) {
+          line.transition()
+            .duration(1000) // Duration for the color transition
+            .ease(d3.easeLinear)
+            .attr("marker-end", "url(#arrowred)");
+        }
+
         setSteps([...steps, `Edge ${renameEdge(edgeId, graphData.nodes)} was wrongly selected.`]);
       }
     } else {
@@ -180,10 +200,19 @@ function GraphVisualization({algorithm}) {
   const handleMouseOverEdge = (event, d) => {
     if (mode === "manual" && !steps.includes('Correct Path Selected!')) {
       const edgeId = `edge${d.source}-${d.target}`;
-      d3.select(`#${edgeId}`).transition()
-      .duration(1000) // Duration for the color transition
-      .ease(d3.easeLinear)
-      .attr("stroke", correctSelectedEdges.includes(edgeId) ? "green" : "red");
+      const color = correctSelectedEdges.includes(edgeId) ? "green" : "red";
+
+      const line = d3.select(`#${edgeId}`).transition()
+        .duration(1000) // Duration for the color transition
+        .ease(d3.easeLinear)
+        .attr("stroke", color);
+
+      if (isDirected) {
+        line.transition()
+          .duration(1000) // Duration for the color transition
+          .ease(d3.easeLinear)
+          .attr("marker-end", "url(#arrow" + color + ")");
+      }
     } else {
       console.log(`You are not allowed to interact with graph on auto mode. Clear Graph data if you want to restart.`);
     }
@@ -192,18 +221,35 @@ function GraphVisualization({algorithm}) {
   const handleMouseOutEdge = (event, d) => {
     if (mode === "manual" && !steps.includes('Correct Path Selected!')) {
       const edgeId = `edge${d.source}-${d.target}`;
+
       if (!selectedEdges.includes(edgeId)) {
-        d3.select(`#${edgeId}`).transition()
+        const color = correctSelectedEdges.includes(edgeId) ? "green" : "gray";
+
+        const line = d3.select(`#${edgeId}`).transition()
         .duration(1000) // Duration for the color transition
         .ease(d3.easeLinear)
-        .attr("stroke", (d) =>
-          correctSelectedEdges.includes(edgeId) ? "green" : "gray"
-        );
+        .attr("stroke", color);
+
+        if (isDirected) {
+          line.transition()
+            .duration(1000) // Duration for the color transition
+            .ease(d3.easeLinear)
+            .attr("marker-end", "url(#arrow" + color + ")");
+        }
       } else {
-        d3.select(`#${edgeId}`).transition()
+        const color = correctSelectedEdges.includes(edgeId) ? "green" : selectedEdges.includes(edgeId) ? "red" : "gray";
+
+       const line = d3.select(`#${edgeId}`).transition()
         .duration(1000) // Duration for the color transition
         .ease(d3.easeLinear)
-        .attr("stroke", correctSelectedEdges.includes(edgeId) ? "green" : selectedEdges.includes(edgeId) ? "red" : "gray");
+        .attr("stroke", color);
+
+        if (isDirected) {
+          line.transition()
+            .duration(1000) // Duration for the color transition
+            .ease(d3.easeLinear)
+            .attr("marker-end", "url(#arrow" + color + ")");
+        }
       }
     } else {
       console.log(`You are not allowed to interact with graph on auto mode. Clear Graph data if you want to restart.`);
@@ -218,21 +264,41 @@ function GraphVisualization({algorithm}) {
       correctPath.forEach((edgeId) => {
         setTimeout(() => {
           if (edges.includes(edgeId)) {
-            d3.select(`#${edgeId}`).transition()
+            const line = d3.select(`#${edgeId}`).transition()
             .duration(1000) // Duration for the color transition
             .ease(d3.easeLinear)
             .attr('stroke', 'green');
+
+            if (isDirected) {
+              line.transition()
+                .duration(1000) // Duration for the color transition
+                .ease(d3.easeLinear)
+                .attr("marker-end", "url(#arrowgreen)");
+            }
           } else {
-            d3.select(`#${edgeId}`).transition()
+            const line = d3.select(`#${edgeId}`).transition()
             .duration(1000) // Duration for the color transition
             .ease(d3.easeLinear)
             .attr('stroke', 'gray');
+
+            if (isDirected) {
+              line.transition()
+                .duration(1000) // Duration for the color transition
+                .ease(d3.easeLinear)
+                .attr("marker-end", "url(#arrowgray)");
+            }
           }
         }, delay * 2000); // Applying colors one by one with a delay
         delay++;
       });
     } else {
-      d3.select("#graph-container svg").selectAll(".link line").attr("stroke", "gray");
+      const line =  d3.select("#graph-container svg").selectAll(".link line").attr("stroke", "gray");
+      if (isDirected) {
+        line.transition()
+          .duration(1000) // Duration for the color transition
+          .ease(d3.easeLinear)
+          .attr("marker-end", "url(#arrowgray)");
+      }
     }
   }, [mode, graphData.links, correctPath, setCorrectSelectedEdges]);
   
@@ -338,8 +404,8 @@ function GraphVisualization({algorithm}) {
           />
         }
         <GraphSelection 
-          onGraphSelect={(nodes, links) => {
-            setGraphData({ nodes, links });
+          onGraphSelect={(nodes, links, label) => {
+            setGraphData({ nodes, links, label });
           }} 
           algorithm={algorithm}
         />
